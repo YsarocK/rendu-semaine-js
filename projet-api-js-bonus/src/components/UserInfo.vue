@@ -34,6 +34,10 @@
         -
         <p>{{ closestUser.distance }}</p>
       </div>
+      <h2>10 mots les plus utilisés</h2>
+      <div v-for="word in top10Words">
+        <p>{{ word[0] }}</p>
+      </div>
     </div>
     <h1 v-else>Aucun utilisateur séléctionné</h1>
   </div>
@@ -50,11 +54,16 @@ const props = defineProps<{
 }>();
 
 const user: Ref<User | null> = ref(null);
+
 const userPosts: Ref<Post[] | null> = ref(null);
+
 const userPostsComments: Ref<any[] | null> = ref(null);
-const userTodos: Ref<any[] | null> = ref(null);
 const averageCommentsNumber = ref(0);
+
+const userTodos: Ref<any[] | null> = ref(null);
+
 const closestUser: Ref<{ user: string; distance: number } | null> = ref(null);
+const top10Words: Ref<any[] | null> = ref(null);
 
 watch(
   () => props.userId,
@@ -98,6 +107,7 @@ const retrieveUser = async (userId: number) => {
     userTodos.value = data[1];
 
     getClosestUser();
+    getMostUsedWords();
   });
 };
 
@@ -119,6 +129,29 @@ const getClosestUser = () => {
   }
   closestUser.value = closest;
 };
+
+const getMostUsedWords = () => {
+  if (userPosts.value === null) return;
+  const text = userPosts.value
+    .map((post) => post.title)
+    .join(" ")
+    .toLowerCase();
+  const words = text.split(" ");
+  const wordCounts = {};
+
+  for (const word of words) {
+    if (wordCounts[word]) {
+      wordCounts[word] += 1;
+    } else {
+      wordCounts[word] = 1;
+    }
+  }
+
+  const entries = Object.entries(wordCounts);
+  entries.sort((a: any, b: any) => b[1] - a[1]);
+
+  top10Words.value = entries.slice(0, 10);
+};
 </script>
 
 <style scoped lang="scss">
@@ -129,6 +162,10 @@ const getClosestUser = () => {
 
   h1 {
     margin-top: 0;
+  }
+
+  h2 {
+    margin-top: 4rem;
   }
 
   &__header {
